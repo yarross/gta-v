@@ -1,26 +1,150 @@
 <!DOCTYPE html>
-<html>
-   <head>
-      <title>GTA V MAP</title>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico">
-      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="">
-      <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
-   </head>
-   <style>
-       #map { 
-         position:absolute;
-         height: 100%; 
-         width: 100%;
-      }
-   </style>
-   <body>
-      <div id="map"/>
-	     <script src="scripts/script.js" ></script>
-        <div id="map" style="width: 600px; height: 400px;"></div>
-        <div id="mouse-coordinates" style="position: absolute; bottom: 10px; left: 10px; background-color: white; padding: 5px; z-index: 1000;"></div>
-        <script src="script.js"></script>
+<html lang="ru">
+<head>
+    <title>GTA V - Карта Сокровищ</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        #mouse-coordinates {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background-color: rgba(20, 20, 20, 0.85);
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Премиальное меню выбора слоев */
+        .leaflet-control-layers {
+            background: rgba(20, 20, 20, 0.8) !important;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 8px !important;
+            color: #eee !important;
+            padding: 10px !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+            min-width: 220px;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            transition: all 0.3s ease;
+        }
+        .leaflet-control-layers-expanded {
+            padding: 15px !important;
+            background: rgba(20, 20, 20, 0.9) !important;
+        }
+        .leaflet-control-layers-group-name {
+            color: #888;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            display: block;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 5px;
+        }
+        .leaflet-control-layers-selector {
+            margin-right: 10px !important;
+            accent-color: #00e5ff; /* Современный цвет чекбокса */
+        }
+        .leaflet-control-layers label {
+            margin-bottom: 6px !important;
+            display: flex !important;
+            align-items: center;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .leaflet-control-layers label:hover {
+            color: #00e5ff;
+        }
         
-   </body>
+        /* Индикаторы типов (точки) */
+        .layer-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 5px currentColor;
+        }
+
+        /* Кастомный скроллбар для меню */
+        .leaflet-control-layers-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .leaflet-control-layers-list::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+        }
+    </style>
+    <style>
+        /* Премиальная стилизация кластеров (Glassmorphism) */
+        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        .marker-cluster div {
+            background: linear-gradient(135deg, #37474f 0%, #263238 100%) !important;
+            color: #00e5ff !important;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(0, 229, 255, 0.5);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+        }
+
+        /* Премиальные попапы под GTA V стиль */
+        .leaflet-popup-content-wrapper {
+            background: rgba(15, 15, 15, 0.95) !important;
+            backdrop-filter: blur(10px);
+            color: #fff !important;
+            border: 1px solid #444 !important;
+            border-radius: 4px !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
+            padding: 5px;
+        }
+        .leaflet-popup-tip {
+            background: rgba(15, 15, 15, 0.95) !important;
+        }
+
+        /* Анимация для иконок */
+        .premium-div-icon svg {
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .premium-div-icon:hover svg {
+            transform: scale(1.4);
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+    <div id="mouse-coordinates">Загрузка координат...</div>
+
+    <script src="scripts/script.js"></script>
+
+</body>
 </html>
